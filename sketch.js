@@ -2,14 +2,17 @@
 // Lista de células
 let cells = []
 let energyPoints = []
-
+let poisonPoints = []
 
 function setup() {
 
     createCanvas(900, 650)
     //background(0)
-    for (var index = 0; index < random(200); index++) {
+    for (var index = 0; index < random(100, 500); index++) {
         energyPoints.push(new Energy())
+    }
+    for (var index = 0; index < random(0, 100); index++) {
+        poisonPoints.push(new Poison())
     }
     
 
@@ -32,6 +35,10 @@ function draw() {
         let element = energyPoints[index];
         element.show()
     }
+    for (var index = 0; index < poisonPoints.length; index++) {
+        let element = poisonPoints[index];
+        element.show()
+    }
 
     
     //console.log(' >> '+cells.length)
@@ -43,12 +50,12 @@ function draw() {
     cells.forEach(cell => {
        
         cell.show()
-        cell.viver(frameCount, cells, energyPoints)
+        cell.viver(frameCount, cells, energyPoints, poisonPoints)
 
 
     });
 
-    console.log(' ## '+energyPoints.length)
+    console.log(' ## Poison: '+poisonPoints.length + ' - Energy: '+energyPoints.length)
    
 
 }

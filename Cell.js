@@ -60,7 +60,7 @@ function Cell(tipo, p, r, c, e){
    
     
     // Controla Ciclo de vida
-    this.viver = function(frameAtual, cells, energyPoints){
+    this.viver = function(frameAtual, cells, energyPoints, poisonPoints){
 
         if(!this.estaVivo){
 
@@ -86,8 +86,12 @@ function Cell(tipo, p, r, c, e){
                 this.move(cells)
                 this.come(cells)
 
+                // Busca específica po energyPoints
                 if(energyPoints.length > 0 ){
                     this.findEnergy(energyPoints)
+                }
+                if(poisonPoints.length > 0 ){
+                    this.avoidPoison(poisonPoints)
                 }
 
                 // Realiza Mitose (se divide)
@@ -340,6 +344,39 @@ function Cell(tipo, p, r, c, e){
                     self.atualizaEnergia(element.energy)
                     // console.log(element.energy)
                     element.apaga(energyPoints)
+                    break
+                }
+               
+            }
+
+        }
+
+    }
+    this.avoidPoison = function(poisonPoints){
+        let self = this
+        for (var index = 0; index < poisonPoints.length; index++) {
+            let element = poisonPoints[index];
+
+            let distancia = dist(self.pos.x, self.pos.y, element.pos.x, element.pos.y)
+            
+            if(distancia < self.raio*5){
+                
+                let foge
+                let medo = p5.Vector.sub(element.pos, self.pos)
+                medo.mult(-1)
+                medo.setMag(this.maxVel)
+                foge = p5.Vector.sub(medo, self.vel)
+                foge.limit(0.8)
+                this.acc.add(foge)
+                this.vel.add(this.acc)
+                this.pos.add(this.vel) // Atualiza Posição
+                this.atualizaEnergia(this.vel.mag()*(-0.1))
+                this.acc.mult(0)
+
+                if(distancia < self.raio) {
+                    self.atualizaEnergia(element.energy*(-1))
+                    // console.log(element.energy)
+                    element.apaga(poisonPoints)
                     break
                 }
                
