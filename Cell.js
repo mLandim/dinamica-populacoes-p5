@@ -364,7 +364,7 @@ function Cell(tipo, p, r, c, e){
                 let foge
                 let medo = p5.Vector.sub(element.pos, self.pos)
                 medo.mult(-1)
-                medo.setMag(this.maxVel)
+                medo.setMag(this.maxVel/2)
                 foge = p5.Vector.sub(medo, self.vel)
                 foge.limit(0.8)
                 this.acc.add(foge)

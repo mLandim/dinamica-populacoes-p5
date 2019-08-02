@@ -70,6 +70,11 @@ function mousePressed(){
         }
     })
 
+    for (var index = 0; index < random(0, 100); index++) {
+        poisonPoints.push(new Poison())
+    }
+
+
 }
 
 
