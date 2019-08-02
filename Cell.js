@@ -2,15 +2,6 @@
 function Cell(tipo, p, r, c){
 
     this.tipo = tipo
-    // Propriedades da célula
-    if(p){
-        this.pos = p.copy()
-    }else{
-        this.pos = createVector(random(0, width), random(0, height))
-    }
-    this.raio = r || 40
-    this.cor = c || color(random(150,255), random(150,255), random(150,255), 100)
-
     this.id = char(random(100)) + random(1000)
     this.estaVivo = false
     this.frameInicial = 0
@@ -20,8 +11,22 @@ function Cell(tipo, p, r, c){
     this.vel = createVector()
     this.acc = createVector()
     this.alvo = null
-    this.maxVel = 5/this.raio
+    this.alpha = 100
+    this.raio = r || 40
+    this.cor = c || color(random(150,255), random(150,255), random(150,255), this.alpha)
+    
     this.raioAcao = this.raio / (this.raio*0.5)
+    this.maxVel = 5/this.raio
+
+    // Propriedades da célula
+    if(p){
+        this.pos = p.copy()
+    }else{
+        this.pos = createVector(random(0, width), random(0, height))
+    }
+   
+
+   
 
 
 
@@ -65,7 +70,7 @@ function Cell(tipo, p, r, c){
 
             if(this.duracao <= this.expectativaVida){
                 // Continua vivendo
-
+                this.alpha += 1
                 // Cresce
                 this.cresce(0.1)
                 // Se move (eleatoriamente por enquanto)
@@ -78,8 +83,12 @@ function Cell(tipo, p, r, c){
 
             }else{
                
+                let chance = random(0, 10)
                 // Morre
-                this.morre(cells, frameAtual)
+                if(chance < 8 ){
+                    this.morre(cells, frameAtual)
+                }
+                
             }
            
 
@@ -99,7 +108,7 @@ function Cell(tipo, p, r, c){
             // Respeitando bordas do frame
             let novoX
             let novoY
-            let peso = 5
+            let peso = 0.1*this.raio
             /*
             if(this.pos.x >= width){
                 novoX = this.pos.x - 20
@@ -117,16 +126,16 @@ function Cell(tipo, p, r, c){
             }
             */
             if(this.pos.x >= width){
-                novoX =  -20
+                novoX =  -(this.raio*1.1)
             }else if(this.pos.x < 0){
-                novoX =  20
+                novoX =  (this.raio*1.1)
             }else{
                 novoX = random(-peso , peso)
             }
             if(this.pos.y >= height){
-                novoY =  -20
+                novoY =  -(this.raio*1.1)
             }else if(this.pos.y < 0){
-                novoY =   20
+                novoY =   (this.raio*1.1)
             }else{
                 novoY =  random(-peso , peso)
             }
