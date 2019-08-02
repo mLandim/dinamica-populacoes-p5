@@ -4,18 +4,25 @@ let cells = []
 
 function setup() {
 
-    createCanvas(800, 600)
+    createCanvas(900, 650)
     cells.push(new Cell('A'))
     cells.push(new Cell('B'))
     cells.push(new Cell('C'))
     cells.push(new Cell('D'))
+    cells.push(new Cell('E'))
+    cells.push(new Cell('F'))
 
 }
 
 function draw() {
 
     background(0)
-    console.log(' >> '+cells.length)
+    //console.log(' >> '+cells.length)
+    if(cells.length === 0){
+        console.log(' >> '+cells.length)
+        noLoop()
+    }
+
     cells.forEach(cell => {
        
         cell.show()

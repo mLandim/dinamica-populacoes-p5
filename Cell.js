@@ -1,45 +1,50 @@
 
-function Cell(tipo, p, r, c){
+function Cell(tipo, p, r, c, e){
 
+    // Propriedades da célula
     this.tipo = tipo
     this.id = char(random(100)) + random(1000)
     this.estaVivo = false
     this.frameInicial = 0
     this.frameFinal = 0
     this.duracao = 0
-    this.expectativaVida = random(100, 300)
-    this.vel = createVector()
-    this.acc = createVector()
-    this.alvo = null
-    this.alpha = 100
-    this.raio = r || 40
-    this.cor = c || color(random(150,255), random(150,255), random(150,255), this.alpha)
+    this.energinaBasal = random(0.01, 0.05)
+    this.energia = e || 255
+    this.expectativaInicialVida = random(100, 1000)
+    this.expectativaVida = 0
+       
+    this.cor = c || color(random(150,255), random(150,255), random(150,255), this.energia)
     
+    this.raio = r || 40
     this.raioAcao = this.raio / (this.raio*0.5)
-    this.maxVel = 5/this.raio
-
-    // Propriedades da célula
+    this.maxVel = 50/this.raio
+    this.multplicador = this.raio*0.02
+    
+    this.acc = createVector()
+    this.vel = createVector()
     if(p){
         this.pos = p.copy()
     }else{
-        this.pos = createVector(random(0, width), random(0, height))
+        this.pos = createVector(random(width*0.2, width*0.8), random(height*0.2, height*0.8))
     }
-   
+    
+    this.alvo = null
+    this.predador = null
 
    
-
-
-
-
     // Avalia se foi clidado
     this.clicado = function(x, y){
-
+        
         let d = dist(this.pos.x, this.pos.y, x, y)
-        if(d < 100){
-            return true
+        if(d < this.raio*2){
+            //return true
+            console.log(this.id+ ' >> '+this.energia)
         }else{
-            return false
+            //return false
         }
+        
+        //console.log(this.id+ ' >> '+this.energia)
+
 
     }
 
@@ -49,8 +54,10 @@ function Cell(tipo, p, r, c){
         noStroke()
         fill(this.cor)
         ellipse(this.pos.x, this.pos.y, this.raio, this.raio)
-    
+        
     }
+
+   
     
     // Controla Ciclo de vida
     this.viver = function(frameAtual, cells){
@@ -66,28 +73,34 @@ function Cell(tipo, p, r, c){
         
         }else{
 
+            this.atualizaExpectativa()
             this.duracao = frameAtual - this.frameInicial
-
-            if(this.duracao <= this.expectativaVida){
+              
+            if(this.energia > 0){ // Se ainda tem energia :: pode viver
+                
                 // Continua vivendo
-                this.alpha += 1
+                //console.log(this.id+ ' >> '+this.energia)
                 // Cresce
-                this.cresce(0.1)
+                this.cresce(this.energinaBasal)
                 // Se move (eleatoriamente por enquanto)
                 this.move(cells)
                 this.come(cells)
                 // Realiza Mitose (se divide)
                 this.mitose(cells)
                 
-
-
-            }else{
-               
-                let chance = random(0, 10)
-                // Morre
-                if(chance < 8 ){
-                    this.morre(cells, frameAtual)
+                // Se passou da expectativa de vida :: pode morrer mesmo com energia
+                if(this.duracao > this.expectativaVida){
+                    let chance = random(0, 10)
+                    // Morre
+                    if(chance > 8 ){
+                        this.morre(cells, frameAtual)
+                    }
                 }
+
+
+            }else{ // Se aenergia acabou :: morre
+             
+                this.morre(cells, frameAtual)
                 
             }
            
@@ -97,18 +110,36 @@ function Cell(tipo, p, r, c){
 
     }
 
-    this.cresce = function(multplicador){
-        this.raio = this.raio + multplicador
+    // Atualiza a expectativa de vida
+    this.atualizaExpectativa = function(){
+        this.expectativaVida = this.expectativaInicialVida + this.energia 
     }
-    
-    // Movimento aleatóreo na tela
+    // Atualiza o nível de energia
+    this.atualizaEnergia = function(value){
+
+        this.energia += value
+        this.cor.setAlpha(this.energia)
+        //this.multplicador = this.raio*0.02
+
+        this.atualizaExpectativa()
+    }
+
+    // Muda o raio do espécime
+    this.cresce = function(fator){
+        this.raio = this.raio + fator
+        this.atualizaEnergia(fator*(-1))
+    }
+
+    // Cordena movimento (caçar, fugir ou aleatóreo)
     this.move = function(){
 
         
             // Respeitando bordas do frame
             let novoX
             let novoY
-            let peso = 0.1*this.raio
+            let peso = 0.05*this.raio
+            let ajustaVelN = (1/this.raio)*(-1) 
+            let ajustaVelP = (1/this.raio)
             /*
             if(this.pos.x >= width){
                 novoX = this.pos.x - 20
@@ -125,35 +156,49 @@ function Cell(tipo, p, r, c){
                 novoY = this.pos.y + random(-height*peso , height*peso)
             }
             */
-            if(this.pos.x >= width){
-                novoX =  -(this.raio*1.1)
-            }else if(this.pos.x < 0){
-                novoX =  (this.raio*1.1)
+            if(this.pos.x >= width*0.9){
+                novoX = ajustaVelN
+            }else if(this.pos.x < 0.1*width){
+                novoX = ajustaVelP
             }else{
                 novoX = random(-peso , peso)
             }
-            if(this.pos.y >= height){
-                novoY =  -(this.raio*1.1)
-            }else if(this.pos.y < 0){
-                novoY =   (this.raio*1.1)
+
+            if(this.pos.y >= height*0.9){
+                novoY =  ajustaVelN
+            }else if(this.pos.y <  0.1*height){
+                novoY =  ajustaVelP
             }else{
                 novoY =  random(-peso , peso)
             }
 
-            //this.vel = createVector(novoX, novoY)
-
-            //let vel = createVector(novoX, novoY)
-            let cacando = this.cacar(cells)
-            // verifica se está caçando
-            if(cacando === 0) { // Não está
-                this.vel = createVector(novoX, novoY)
-            }else{ // está caçando
-                this.acc.add(cacando)
-                this.vel.add(this.acc)
+            // Verifica se precisa fugir ou se pode caçar
+            let fugindo = this.fugir(cells)
+            
+            
+            
+            // Fugir tem prioridade
+            if(fugindo === 0) {   
                 
+                let cacando = this.cacar(cells)
+                // verifica se está caçando
+                if(cacando === 0) { // Não está
+                    this.vel = createVector(novoX, novoY) // Movimento aleatório
+                }else{ // está caçando
+                    this.acc.add(cacando)
+                    this.vel.add(this.acc)
+                    
+                }
+
+            }else{
+
+                this.acc.add(fugindo)
+                this.vel.add(this.acc)
+
             }
 
-            this.pos.add(this.vel) // Atualiza POsição
+            this.pos.add(this.vel) // Atualiza Posição
+            this.atualizaEnergia(this.vel.mag()*(-0.1))
             this.acc.mult(0) // zerando aceleracao
 
 
@@ -163,29 +208,60 @@ function Cell(tipo, p, r, c){
             }
      
     }
-
-    this.cacar = function(cells){
-
-        let raioAcao = this.raio*5
+    this.fugir = function(cells) {
+        
+        let raioAcao = this.raio*4
         let self = this
-        this.alvo = null
-
+        this.predador = null
         for (let index = 0; index < cells.length; index++) {
-            const alvo = cells[index];
-            let distancia = dist(self.pos.x, self.pos.y, alvo.pos.x, alvo.pos.y)
-            if(distancia < raioAcao && self.tipo != alvo.tipo){
-                self.alvo = alvo
+
+            const predador = cells[index];
+            let distancia = dist(self.pos.x, self.pos.y, predador.pos.x, predador.pos.y)
+            // Se estiver no raio de ação e for menor que o predador (independente do tipo)
+            if(distancia < raioAcao && self.raio < predador.raio){ 
+                self.predador = predador
                 break 
             }
         }
 
-        /*
-        cells.forEach(alvo => {
-            let distancia = dist(self.pos.x, self.pos.y, alvo.pos.x, alvo.pos.y)
-            if(distancia < raioAcao && self.tipo != alvo.tipo){
-                self.alvo = alvo 
+        let foge
+        if(self.predador===null){
+            foge = 0
+        }else{
+
+            let medo = p5.Vector.sub(this.predador.pos, self.pos)
+            medo.mult(-1)
+            medo.setMag(this.maxVel)
+            foge = p5.Vector.sub(medo, self.vel)
+            foge.limit(0.3)
+
+        }
+
+
+        return foge
+
+    }
+    this.cacar = function(cells){
+
+        let raioAcao = this.raio*6
+        let self = this
+        //this.alvo = null
+        
+        // Só procura alvo se não tiver alvo atual ou ou alvo atual estiver morto
+        //if(cells.indexOf(this.alvo) === -1 && this.alvo===null ){
+
+        
+            for (let index = 0; index < cells.length; index++) {
+                const alvo = cells[index];
+                let distancia = dist(self.pos.x, self.pos.y, alvo.pos.x, alvo.pos.y)
+                // Se estiver dentro do raio de ação e for de tipo diferente
+                if(distancia < raioAcao && self.tipo != alvo.tipo && self.raio >= alvo.raio*2){
+                    self.alvo = alvo
+                    break 
+                }
             }
-        })*/
+
+        //}
         
         let persegue
 
@@ -193,45 +269,41 @@ function Cell(tipo, p, r, c){
             persegue = 0
         }else{
 
-            // Caça
-            if(self.raio >= self.alvo.raio*2){
-                let fome = p5.Vector.sub(this.alvo.pos, self.pos)
-                fome.setMag(5)
-                persegue = p5.Vector.sub(fome, self.vel)
-                persegue.limit(0.3)
+            let fome = p5.Vector.sub(this.alvo.pos, self.pos)
+            fome.setMag(this.maxVel)
+            persegue = p5.Vector.sub(fome, self.vel)
+            persegue.limit(0.8)
 
-            }else if (self.raio <= self.alvo.raio){  // foge
-                let fome = p5.Vector.sub(this.alvo.pos, self.pos)
-                fome.mult(-1)
-                fome.setMag(5)
-                persegue = p5.Vector.sub(fome, self.vel)
-                persegue.limit(0.3)
-
-            }else{
-
-                persegue = 0
-            }
-           
         }
        
         return persegue
 
     }
 
+    // gera ganho de energia e parte da massa (de quem foi consumido)
     this.come = function(cells){
         var self = this
         cells.forEach(alvo => {
             
             let distancia = dist(self.pos.x, self.pos.y, alvo.pos.x, alvo.pos.y)
-            if(distancia < self.raio  && alvo.raio < self.raio*0.5){
+            
+            if(distancia < self.raio*0.5  && alvo.raio <= self.raio*0.5){
                 if(alvo.tipo != self.tipo){
+
+                    self.atualizaEnergia(alvo.energia)
                     alvo.morre(cells)
-                    self.expectativaVida = self.expectativaVida + 40
-                    self.cresce(0.3)
+                    self.cresce(alvo.raio*0.1)
+                    //self.energia += alvo.raio*0.6
+                    
+                    //self.expectativaVida = self.expectativaVida + 40
+                    
                 }else{
+
+                    
+                    self.atualizaEnergia(alvo.energia*0.5)
                     alvo.morre(cells)
-                    self.expectativaVida = self.expectativaVida + 20
-                    self.cresce(0.1)
+                    self.cresce(alvo.raio*0.03)
+
                 }
              
             }
@@ -239,24 +311,31 @@ function Cell(tipo, p, r, c){
         })
 
     }
-
+    // mitose gera perda de massa e energia
     this.mitose = function(cells){
-
+        
         if(this.estaVivo){
 
-            if(this.duracao > Math.floor(this.expectativaVida*0.5)  && this.duracao < Math.floor(this.expectativaVida*0.8) && random(1,10) > 9 ){
+            const raioTransferido = random(this.raio*0.4, this.raio*0.5)
+            const energiaTranferida = random(this.energia*0.4, this.energia*0.5) // Ajuste de custo energético da mitose
+           
+
+            if(this.duracao > Math.floor(this.expectativaVida*0.4)  && random(1, 10) > 5 && this.raio > 10 ){
                 
-                var cell = new Cell(this.tipo, this.pos.mult(1.01), random(this.raio*0.4, this.raio*0.5), this.cor)
+                let cell = new Cell(this.tipo, this.pos, raioTransferido, this.cor, energiaTranferida)
                 cells.push(cell)
-                this.raio = this.raio - this.raio*0.2
+
+                this.raio = this.raio - raioTransferido/4
+
+                this.atualizaEnergia((energiaTranferida/3)*(-1))
+
             }
          
         }
-
         
     }
 
-
+    // Mata espécime
     this.morre = function(cells, frame){
 
         this.estaVivo = false
