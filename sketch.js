@@ -1,22 +1,39 @@
 
 // Lista de células
 let cells = []
+let energyPoints = []
+
 
 function setup() {
 
     createCanvas(900, 650)
+    //background(0)
+    for (var index = 0; index < random(200); index++) {
+        energyPoints.push(new Energy())
+    }
+    
+
+    
     cells.push(new Cell('A'))
     cells.push(new Cell('B'))
     cells.push(new Cell('C'))
     cells.push(new Cell('D'))
     cells.push(new Cell('E'))
     cells.push(new Cell('F'))
+    
 
 }
 
 function draw() {
 
     background(0)
+
+    for (var index = 0; index < energyPoints.length; index++) {
+        let element = energyPoints[index];
+        element.show()
+    }
+
+    
     //console.log(' >> '+cells.length)
     if(cells.length === 0){
         console.log(' >> '+cells.length)
@@ -26,9 +43,12 @@ function draw() {
     cells.forEach(cell => {
        
         cell.show()
-        cell.viver(frameCount, cells)
+        cell.viver(frameCount, cells, energyPoints)
+
 
     });
+
+    console.log(' ## '+energyPoints.length)
    
 
 }

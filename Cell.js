@@ -38,7 +38,7 @@ function Cell(tipo, p, r, c, e){
         let d = dist(this.pos.x, this.pos.y, x, y)
         if(d < this.raio*2){
             //return true
-            console.log(this.id+ ' >> '+this.energia)
+            console.log(this.tipo+ ' >> '+this.id+ ' >> '+this.energia)
         }else{
             //return false
         }
@@ -60,7 +60,7 @@ function Cell(tipo, p, r, c, e){
    
     
     // Controla Ciclo de vida
-    this.viver = function(frameAtual, cells){
+    this.viver = function(frameAtual, cells, energyPoints){
 
         if(!this.estaVivo){
 
@@ -85,6 +85,11 @@ function Cell(tipo, p, r, c, e){
                 // Se move (eleatoriamente por enquanto)
                 this.move(cells)
                 this.come(cells)
+
+                if(energyPoints.length > 0 ){
+                    this.findEnergy(energyPoints)
+                }
+
                 // Realiza Mitose (se divide)
                 this.mitose(cells)
                 
@@ -288,18 +293,15 @@ function Cell(tipo, p, r, c, e){
             let distancia = dist(self.pos.x, self.pos.y, alvo.pos.x, alvo.pos.y)
             
             if(distancia < self.raio*0.5  && alvo.raio <= self.raio*0.5){
+                
                 if(alvo.tipo != self.tipo){
 
                     self.atualizaEnergia(alvo.energia)
                     alvo.morre(cells)
                     self.cresce(alvo.raio*0.1)
-                    //self.energia += alvo.raio*0.6
-                    
-                    //self.expectativaVida = self.expectativaVida + 40
                     
                 }else{
-
-                    
+                 
                     self.atualizaEnergia(alvo.energia*0.5)
                     alvo.morre(cells)
                     self.cresce(alvo.raio*0.03)
@@ -308,9 +310,45 @@ function Cell(tipo, p, r, c, e){
              
             }
 
+
+
         })
 
     }
+
+    this.findEnergy = function(energyPoints){
+        let self = this
+        for (var index = 0; index < energyPoints.length; index++) {
+            let element = energyPoints[index];
+
+            let distancia = dist(self.pos.x, self.pos.y, element.pos.x, element.pos.y)
+            
+            if(distancia < self.raio*5){
+                
+                let persegue
+                let fome = p5.Vector.sub(element.pos, self.pos)
+                fome.setMag(this.maxVel)
+                persegue = p5.Vector.sub(fome, self.vel)
+                persegue.limit(0.8)
+                this.acc.add(persegue)
+                this.vel.add(this.acc)
+                this.pos.add(this.vel) // Atualiza Posição
+                this.atualizaEnergia(this.vel.mag()*(-0.1))
+                this.acc.mult(0)
+
+                if(distancia < self.raio) {
+                    self.atualizaEnergia(element.energy)
+                    // console.log(element.energy)
+                    element.apaga(energyPoints)
+                    break
+                }
+               
+            }
+
+        }
+
+    }
+
     // mitose gera perda de massa e energia
     this.mitose = function(cells){
         
